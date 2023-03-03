@@ -6,13 +6,16 @@ import {
   Image,
   Modal,
   TouchableHighlight,
-  DatePickerAndroid,
-  TimePickerAndroid,
-  DatePickerIOS,
   Platform,
   Animated,
   Keyboard
 } from 'react-native';
+import {
+  DatePickerAndroid,
+  DateTimePickerAndroid,
+  TimePickerAndroid,
+  DatePickerIOS
+} from '@react-native-community/datetimepicker';
 import Style from './style';
 import Moment from 'moment';
 
@@ -50,7 +53,7 @@ class DatePicker extends Component {
     this.setModalVisible = this.setModalVisible.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (nextProps.date !== this.props.date) {
       this.setState({date: this.getDate(nextProps.date)});
     }
@@ -66,7 +69,8 @@ class DatePicker extends Component {
         this.state.animatedHeight,
         {
           toValue: height,
-          duration: duration
+          duration: duration,
+          useNativeDriver: false
         }
       ).start();
     } else {
@@ -74,7 +78,8 @@ class DatePicker extends Component {
         this.state.animatedHeight,
         {
           toValue: 0,
-          duration: duration
+          duration: duration,
+          useNativeDriver: false
         }
       ).start(() => {
         this.setState({modalVisible: visible});
@@ -197,10 +202,11 @@ class DatePicker extends Component {
     }, 200);
   }
 
-  onDatePicked({action, year, month, day}) {
-    if (action !== DatePickerAndroid.dismissedAction) {
+  onDatePicked(action, selectedDate) {
+    if (action.type !== 'dismissed') {
+      let date = new Date(selectedDate);
       this.setState({
-        date: new Date(year, month, day)
+        date: new Date(date.getFullYear(), date.getMonth(), date.getDate())
       });
       this.datePicked();
     } else {
@@ -267,12 +273,13 @@ class DatePicker extends Component {
 
       // 选日期
       if (mode === 'date') {
-        DatePickerAndroid.open({
-          date: this.state.date,
-          minDate: minDate && this.getDate(minDate),
-          maxDate: maxDate && this.getDate(maxDate),
-          mode: androidMode
-        }).then(this.onDatePicked);
+        DateTimePickerAndroid.open({
+          value: this.state.date,
+          minimumDate: minDate && this.getDate(minDate),
+          maximumDate: maxDate && this.getDate(maxDate),
+          onChange: this.onDatePicked,
+          mode
+        });
       } else if (mode === 'time') {
         // 选时间
 
